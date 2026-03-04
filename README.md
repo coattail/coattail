@@ -78,3 +78,5 @@
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&height=120&section=footer&color=gradient&customColorList=0,2,12,20,30" />
 </p>
+
+<!-- profile-refresh: 2026-03-05T01:35:00+08:00 -->
