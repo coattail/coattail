@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 
@@ -33,6 +34,99 @@ def fetch_user(login: str) -> dict:
     )
     with urllib.request.urlopen(req, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def fetch_contribution_days(login: str, start: date, end: date) -> list[tuple[date, int]]:
+    req = urllib.request.Request(
+        f"https://github.com/users/{login}/contributions?from={start.isoformat()}&to={end.isoformat()}",
+        headers={
+            "Accept": "text/html",
+            "User-Agent": "sunny-profile-card-generator",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=20) as response:
+        body = response.read().decode("utf-8", errors="ignore")
+
+    day_pairs = re.findall(r'data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-count="(\d+)"', body)
+    if not day_pairs:
+        reverse_pairs = re.findall(r'data-count="(\d+)"[^>]*data-date="(\d{4}-\d{2}-\d{2})"', body)
+        day_pairs = [(date_text, count_text) for count_text, date_text in reverse_pairs]
+
+    results: list[tuple[date, int]] = []
+    for date_text, count_text in day_pairs:
+        try:
+            results.append((datetime.strptime(date_text, "%Y-%m-%d").date(), int(count_text)))
+        except ValueError:
+            continue
+    results.sort(key=lambda item: item[0])
+    return results
+
+
+def format_short_date(target: date) -> str:
+    return f"{target.strftime('%b')} {target.day}"
+
+
+def compute_contribution_stats(
+    day_counts: list[tuple[date, int]], today: date
+) -> dict[str, int | str | date | None]:
+    count_map = {day: count for day, count in day_counts if day <= today}
+    start_of_year = date(today.year, 1, 1)
+    year_total = sum(count for day, count in count_map.items() if start_of_year <= day <= today)
+
+    if count_map:
+        start_day = min(count_map)
+    else:
+        start_day = start_of_year
+
+    # Longest streak
+    longest_len = 0
+    longest_start: date | None = None
+    longest_end: date | None = None
+    run_len = 0
+    run_start: date | None = None
+
+    cursor = start_day
+    while cursor <= today:
+        value = count_map.get(cursor, 0)
+        if value > 0:
+            if run_len == 0:
+                run_start = cursor
+            run_len += 1
+            if run_len > longest_len and run_start is not None:
+                longest_len = run_len
+                longest_start = run_start
+                longest_end = cursor
+        else:
+            run_len = 0
+            run_start = None
+        cursor += timedelta(days=1)
+
+    # Current streak (active until today)
+    current_len = 0
+    current_start: date | None = None
+    cursor = today
+    while cursor >= start_day and count_map.get(cursor, 0) > 0:
+        current_len += 1
+        current_start = cursor
+        cursor -= timedelta(days=1)
+
+    if current_len > 0 and current_start is not None:
+        current_range = f"{format_short_date(current_start)} – Present"
+    else:
+        current_range = "No active streak"
+
+    if longest_len > 0 and longest_start is not None and longest_end is not None:
+        longest_range = f"{format_short_date(longest_start)} – {format_short_date(longest_end)}"
+    else:
+        longest_range = "No streak yet"
+
+    return {
+        "year_total": year_total,
+        "current_streak": current_len,
+        "current_range": current_range,
+        "longest_streak": longest_len,
+        "longest_range": longest_range,
+    }
 
 
 def is_leap_year(year: int) -> bool:
@@ -82,33 +176,33 @@ def generate_snapshot_svg(user: dict, now: datetime) -> str:
     return "".join(parts)
 
 
-def generate_hero_svg(now: datetime) -> str:
-    width = 900
-    height = 210
-    date_text = now.strftime("%Y-%m-%d")
-    lines = [
-        "Macro Dashboard Builder",
-        "Turning Data into Signals",
-        "Always Shipping Useful Tools",
-    ]
+def generate_hero_svg(stats: dict[str, int | str | date | None]) -> str:
+    width = 1200
+    height = 420
+    current_streak = int(stats["current_streak"])
+    longest_streak = int(stats["longest_streak"])
+    year_total = int(stats["year_total"])
+    current_range = str(stats["current_range"])
+    longest_range = str(stats["longest_range"])
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-        '<defs><linearGradient id="heroBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#121a3b"/><stop offset="100%" stop-color="#0a0f23"/></linearGradient></defs>',
-        '<rect x="0" y="0" width="900" height="210" rx="18" fill="url(#heroBg)"/>',
-        '<text x="42" y="56" fill="#9ec2ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="800">Sunny · Data &amp; Macro</text>',
-        f'<text x="42" y="86" fill="#8b95b2" font-size="14" font-family="Segoe UI,Arial,sans-serif">Updated daily · {esc(date_text)}</text>',
-        '<rect x="42" y="102" width="816" height="1" fill="#263259"/>',
+        '<rect x="0" y="0" width="1200" height="420" rx="18" fill="#13172a"/>',
+        '<line x1="400" y1="34" x2="400" y2="386" stroke="#d9d9df" stroke-width="3" stroke-opacity="0.75"/>',
+        '<line x1="800" y1="34" x2="800" y2="386" stroke="#d9d9df" stroke-width="3" stroke-opacity="0.75"/>',
+        f'<text x="200" y="160" fill="#6ea6ff" font-size="104" font-family="Segoe UI,Arial,sans-serif" font-weight="800" text-anchor="middle">{year_total}</text>',
+        '<text x="200" y="250" fill="#6ea6ff" font-size="68" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Total Contributions</text>',
+        f'<text x="200" y="334" fill="#3bcacb" font-size="60" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range if current_streak > 0 else "This year")}</text>',
+        '<circle cx="600" cy="132" r="100" fill="none" stroke="#6ea6ff" stroke-width="18"/>',
+        '<text x="600" y="58" fill="#6ea6ff" font-size="70" font-family="Segoe UI Emoji,Apple Color Emoji,Segoe UI,Arial,sans-serif" text-anchor="middle">🔥</text>',
+        f'<text x="600" y="158" fill="#b593ff" font-size="102" font-family="Segoe UI,Arial,sans-serif" font-weight="800" text-anchor="middle">{current_streak}</text>',
+        '<text x="600" y="292" fill="#b593ff" font-size="64" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">Current Streak</text>',
+        f'<text x="600" y="370" fill="#3bcacb" font-size="60" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range)}</text>',
+        f'<text x="1000" y="160" fill="#6ea6ff" font-size="104" font-family="Segoe UI,Arial,sans-serif" font-weight="800" text-anchor="middle">{longest_streak}</text>',
+        '<text x="1000" y="250" fill="#6ea6ff" font-size="68" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Longest Streak</text>',
+        f'<text x="1000" y="334" fill="#3bcacb" font-size="60" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(longest_range)}</text>',
+        "</svg>",
     ]
-
-    base_y = 138
-    for index, line in enumerate(lines):
-        y = base_y + index * 24
-        parts.append(
-            f'<text x="42" y="{y}" fill="#66f2ef" font-size="20" font-family="Consolas,Monaco,monospace">{esc(line)}</text>'
-        )
-
-    parts.append("</svg>")
     return "".join(parts)
 
 
@@ -157,9 +251,11 @@ def main() -> None:
     tz = ZoneInfo(TIMEZONE)
     now = datetime.now(tz)
     user = fetch_user(USERNAME)
+    contribution_days = fetch_contribution_days(USERNAME, date(now.year - 1, 1, 1), now.date())
+    contribution_stats = compute_contribution_stats(contribution_days, now.date())
     os.makedirs(DIST_DIR, exist_ok=True)
 
-    hero_svg = generate_hero_svg(now)
+    hero_svg = generate_hero_svg(contribution_stats)
     snapshot_svg = generate_snapshot_svg(user, now)
     year_svg = generate_year_progress_svg(now)
 

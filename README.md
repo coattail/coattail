@@ -3,7 +3,7 @@
 Data dashboards · Macro research · Multi-asset tools
 
 <p align="center">
-  <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/hero-banner.svg" alt="hero banner" />
+  <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/hero-banner.svg" alt="streak overview card" />
 </p>
 
 <p align="center">
