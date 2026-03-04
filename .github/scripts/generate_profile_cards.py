@@ -82,6 +82,36 @@ def generate_snapshot_svg(user: dict, now: datetime) -> str:
     return "".join(parts)
 
 
+def generate_hero_svg(now: datetime) -> str:
+    width = 900
+    height = 210
+    date_text = now.strftime("%Y-%m-%d")
+    lines = [
+        "Macro Dashboard Builder",
+        "Turning Data into Signals",
+        "Always Shipping Useful Tools",
+    ]
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<defs><linearGradient id="heroBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#121a3b"/><stop offset="100%" stop-color="#0a0f23"/></linearGradient></defs>',
+        '<rect x="0" y="0" width="900" height="210" rx="18" fill="url(#heroBg)"/>',
+        '<text x="42" y="56" fill="#9ec2ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="800">Sunny · Data &amp; Macro</text>',
+        f'<text x="42" y="86" fill="#8b95b2" font-size="14" font-family="Segoe UI,Arial,sans-serif">Updated daily · {esc(date_text)}</text>',
+        '<rect x="42" y="102" width="816" height="1" fill="#263259"/>',
+    ]
+
+    base_y = 138
+    for index, line in enumerate(lines):
+        y = base_y + index * 24
+        parts.append(
+            f'<text x="42" y="{y}" fill="#66f2ef" font-size="20" font-family="Consolas,Monaco,monospace">{esc(line)}</text>'
+        )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def generate_year_progress_svg(now: datetime) -> str:
     year = now.year
     days_total = 366 if is_leap_year(year) else 365
@@ -129,15 +159,18 @@ def main() -> None:
     user = fetch_user(USERNAME)
     os.makedirs(DIST_DIR, exist_ok=True)
 
+    hero_svg = generate_hero_svg(now)
     snapshot_svg = generate_snapshot_svg(user, now)
     year_svg = generate_year_progress_svg(now)
 
+    with open(os.path.join(DIST_DIR, "hero-banner.svg"), "w", encoding="utf-8") as file:
+        file.write(hero_svg)
     with open(os.path.join(DIST_DIR, "profile-stable-card.svg"), "w", encoding="utf-8") as file:
         file.write(snapshot_svg)
     with open(os.path.join(DIST_DIR, "year-progress.svg"), "w", encoding="utf-8") as file:
         file.write(year_svg)
 
-    print("Generated dist/profile-stable-card.svg and dist/year-progress.svg")
+    print("Generated dist/hero-banner.svg, dist/profile-stable-card.svg and dist/year-progress.svg")
 
 
 if __name__ == "__main__":

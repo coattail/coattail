@@ -3,7 +3,7 @@
 Data dashboards · Macro research · Multi-asset tools
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&pause=1000&center=true&vCenter=true&width=760&lines=Macro+Dashboard+Builder;Turning+Data+into+Signals;Always+Shipping+Useful+Tools" alt="Typing SVG" />
+  <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/hero-banner.svg" alt="hero banner" />
 </p>
 
 <p align="center">
