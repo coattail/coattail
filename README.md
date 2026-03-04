@@ -7,16 +7,11 @@ Data dashboards · Macro research · Multi-asset tools
 </p>
 
 <p align="center">
-  <img width="49%" src="https://github-readme-stats.vercel.app/api?username=Sunny-1991&show_icons=true&theme=tokyonight&hide_border=true" />
-  <img width="49%" src="https://streak-stats.demolab.com?user=Sunny-1991&theme=tokyonight&hide_border=true" />
+  <img width="68%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/year-progress.svg" alt="year progress countdown" />
 </p>
 
 <p align="center">
   <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/profile-stable-card.svg" alt="profile stable card" />
-</p>
-
-<p align="center">
-  <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/year-progress.svg" alt="year progress countdown" />
 </p>
 
 <p align="center">
