@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Generate snake svg files
         uses: Platane/snk@v3
         with:
@@ -20,6 +23,13 @@ jobs:
           outputs: |
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
+
+      - name: Generate stable profile cards
+        run: python3 .github/scripts/generate_profile_cards.py
+        env:
+          GITHUB_USERNAME: Sunny-1991
+          CARD_TIMEZONE: Asia/Shanghai
+          DIST_DIR: dist
 
       - name: Push snake to output branch
         uses: crazy-max/ghaction-github-pages@v4
