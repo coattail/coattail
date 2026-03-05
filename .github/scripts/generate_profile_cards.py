@@ -220,8 +220,8 @@ def generate_snapshot_svg(user: dict, now: datetime) -> str:
 
 
 def generate_hero_svg(stats: dict[str, int | str | date | None]) -> str:
-    width = 1200
-    height = 420
+    width = 900
+    height = 320
     current_streak = int(stats["current_streak"])
     longest_streak = int(stats["longest_streak"])
     year_total = int(stats["year_total"])
@@ -230,20 +230,22 @@ def generate_hero_svg(stats: dict[str, int | str | date | None]) -> str:
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-        '<rect x="0" y="0" width="1200" height="420" rx="18" fill="#13172a"/>',
-        '<line x1="400" y1="34" x2="400" y2="386" stroke="#d9d9df" stroke-width="3" stroke-opacity="0.75"/>',
-        '<line x1="800" y1="34" x2="800" y2="386" stroke="#d9d9df" stroke-width="3" stroke-opacity="0.75"/>',
-        f'<text x="200" y="160" fill="#6ea6ff" font-size="104" font-family="Segoe UI,Arial,sans-serif" font-weight="800" text-anchor="middle">{year_total}</text>',
-        '<text x="200" y="246" fill="#6ea6ff" font-size="38" font-family="Segoe UI,Arial,sans-serif" font-weight="600" text-anchor="middle">Total Contributions</text>',
-        f'<text x="200" y="332" fill="#3bcacb" font-size="34" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range if current_streak > 0 else "This year")}</text>',
-        '<circle cx="600" cy="132" r="100" fill="none" stroke="#6ea6ff" stroke-width="18"/>',
-        '<text x="600" y="58" fill="#6ea6ff" font-size="70" font-family="Segoe UI Emoji,Apple Color Emoji,Segoe UI,Arial,sans-serif" text-anchor="middle">🔥</text>',
-        f'<text x="600" y="158" fill="#b593ff" font-size="102" font-family="Segoe UI,Arial,sans-serif" font-weight="800" text-anchor="middle">{current_streak}</text>',
-        '<text x="600" y="292" fill="#b593ff" font-size="38" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">Current Streak</text>',
-        f'<text x="600" y="370" fill="#3bcacb" font-size="34" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range)}</text>',
-        f'<text x="1000" y="160" fill="#6ea6ff" font-size="104" font-family="Segoe UI,Arial,sans-serif" font-weight="800" text-anchor="middle">{longest_streak}</text>',
-        '<text x="1000" y="246" fill="#6ea6ff" font-size="38" font-family="Segoe UI,Arial,sans-serif" font-weight="600" text-anchor="middle">Longest Streak</text>',
-        f'<text x="1000" y="332" fill="#3bcacb" font-size="34" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(longest_range)}</text>',
+        '<defs><linearGradient id="hero-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#171c33"/><stop offset="100%" stop-color="#12162b"/></linearGradient><radialGradient id="ring-glow" cx="0.5" cy="0.38" r="0.45"><stop offset="0%" stop-color="#6ea6ff" stop-opacity="0.12"/><stop offset="100%" stop-color="#6ea6ff" stop-opacity="0"/></radialGradient></defs>',
+        '<rect x="0" y="0" width="900" height="320" rx="18" fill="url(#hero-bg)"/>',
+        '<rect x="300" y="38" width="2.2" height="244" rx="1" fill="#d8dbe5" fill-opacity="0.75"/>',
+        '<rect x="600" y="38" width="2.2" height="244" rx="1" fill="#d8dbe5" fill-opacity="0.75"/>',
+        '<circle cx="450" cy="118" r="78" fill="url(#ring-glow)"/>',
+        '<path fill="#6ea6ff" fill-rule="evenodd" d="M450 20C438 30 431 42 431 56C431 75 446 90 464 90C483 90 499 76 499 56C499 44 494 33 483 25C484 35 479 45 470 50C467 40 460 31 450 20ZM471 51C473 58 470 66 463 69C456 65 454 57 458 51C461 47 462 43 462 38C467 41 469 46 471 51Z"/>',
+        f'<text x="150" y="120" fill="#6ea6ff" font-size="70" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">{year_total}</text>',
+        '<text x="150" y="182" fill="#6ea6ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="500" text-anchor="middle">Total Contributions</text>',
+        f'<text x="150" y="238" fill="#3bcacb" font-size="28" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range if current_streak > 0 else "This year")}</text>',
+        '<circle cx="450" cy="112" r="73" fill="none" stroke="#6ea6ff" stroke-width="11"/>',
+        f'<text x="450" y="135" fill="#b593ff" font-size="74" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">{current_streak}</text>',
+        '<text x="450" y="222" fill="#b593ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="600" text-anchor="middle">Current Streak</text>',
+        f'<text x="450" y="270" fill="#3bcacb" font-size="28" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range)}</text>',
+        f'<text x="750" y="120" fill="#6ea6ff" font-size="70" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">{longest_streak}</text>',
+        '<text x="750" y="182" fill="#6ea6ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="500" text-anchor="middle">Longest Streak</text>',
+        f'<text x="750" y="238" fill="#3bcacb" font-size="28" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(longest_range)}</text>',
         "</svg>",
     ]
     return "".join(parts)
