@@ -19,10 +19,6 @@ Data dashboards · Macro research · Multi-asset tools
 </p>
 
 <p align="center">
-  <img width="68%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/profile-stable-card.svg" alt="profile stable card" />
-</p>
-
-<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/github-contribution-grid-snake-dark.svg" />
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/github-contribution-grid-snake.svg" />
