@@ -6,7 +6,7 @@ import math
 import os
 import re
 import urllib.request
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 
@@ -35,6 +35,107 @@ def fetch_user(login: str) -> dict:
     )
     with urllib.request.urlopen(req, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def fetch_repositories(login: str) -> list[dict]:
+    repos: list[dict] = []
+    page = 1
+    while True:
+        req = urllib.request.Request(
+            f"https://api.github.com/users/{login}/repos?per_page=100&page={page}&sort=pushed&type=owner",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "User-Agent": "sunny-profile-card-generator",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=20) as response:
+            page_items = json.loads(response.read().decode("utf-8"))
+        if not isinstance(page_items, list) or not page_items:
+            break
+        repos.extend(page_items)
+        if len(page_items) < 100:
+            break
+        page += 1
+    return repos
+
+
+def parse_github_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def compact_number(value: int) -> str:
+    if value >= 1_000_000:
+        return f"{value / 1_000_000:.1f}M"
+    if value >= 1_000:
+        return f"{value / 1_000:.1f}K"
+    return str(value)
+
+
+def shorten_text(value: str, max_len: int) -> str:
+    if len(value) <= max_len:
+        return value
+    return value[: max_len - 1] + "…"
+
+
+def summarize_portfolio(repos: list[dict], user: dict, now: datetime) -> dict:
+    active_repos = [repo for repo in repos if not repo.get("fork")]
+    if not active_repos:
+        active_repos = repos
+
+    total_stars = sum(int(repo.get("stargazers_count") or 0) for repo in active_repos)
+    total_forks = sum(int(repo.get("forks_count") or 0) for repo in active_repos)
+    open_issues = sum(int(repo.get("open_issues_count") or 0) for repo in active_repos)
+
+    now_utc = now.astimezone(timezone.utc)
+    active_30d = 0
+    latest_push: datetime | None = None
+    for repo in active_repos:
+        pushed = parse_github_datetime(repo.get("pushed_at"))
+        if pushed is None:
+            continue
+        if latest_push is None or pushed > latest_push:
+            latest_push = pushed
+        if (now_utc - pushed) <= timedelta(days=30):
+            active_30d += 1
+
+    top_repo = max(
+        active_repos,
+        key=lambda repo: (
+            int(repo.get("stargazers_count") or 0),
+            int(repo.get("forks_count") or 0),
+            int(repo.get("size") or 0),
+        ),
+        default=None,
+    )
+    top_repo_name = str(top_repo.get("name") or "-") if top_repo else "-"
+    top_repo_stars = int(top_repo.get("stargazers_count") or 0) if top_repo else 0
+
+    language_weights: dict[str, int] = {}
+    for repo in active_repos:
+        language = repo.get("language")
+        if not language:
+            continue
+        weight = int(repo.get("size") or 0)
+        language_weights[str(language)] = language_weights.get(str(language), 0) + max(weight, 1)
+
+    return {
+        "public_repos": int(user.get("public_repos") or len(active_repos)),
+        "total_stars": total_stars,
+        "total_forks": total_forks,
+        "open_issues": open_issues,
+        "active_30d": active_30d,
+        "latest_push_text": latest_push.astimezone(now.tzinfo).strftime("%Y-%m-%d")
+        if latest_push
+        else "N/A",
+        "top_repo_name": top_repo_name,
+        "top_repo_stars": top_repo_stars,
+        "language_weights": language_weights,
+    }
 
 
 def fetch_contribution_days(
@@ -251,6 +352,142 @@ def generate_hero_svg(stats: dict[str, int | str | date | None]) -> str:
     return "".join(parts)
 
 
+def polar_to_cartesian(cx: float, cy: float, radius: float, angle: float) -> tuple[float, float]:
+    theta = math.radians(angle - 90)
+    return cx + radius * math.cos(theta), cy + radius * math.sin(theta)
+
+
+def donut_segment_path(
+    cx: float, cy: float, inner_radius: float, outer_radius: float, start_angle: float, end_angle: float
+) -> str:
+    outer_start = polar_to_cartesian(cx, cy, outer_radius, start_angle)
+    outer_end = polar_to_cartesian(cx, cy, outer_radius, end_angle)
+    inner_end = polar_to_cartesian(cx, cy, inner_radius, end_angle)
+    inner_start = polar_to_cartesian(cx, cy, inner_radius, start_angle)
+    large_arc = 1 if (end_angle - start_angle) > 180 else 0
+    return (
+        f"M {outer_start[0]:.3f} {outer_start[1]:.3f} "
+        f"A {outer_radius:.3f} {outer_radius:.3f} 0 {large_arc} 1 {outer_end[0]:.3f} {outer_end[1]:.3f} "
+        f"L {inner_end[0]:.3f} {inner_end[1]:.3f} "
+        f"A {inner_radius:.3f} {inner_radius:.3f} 0 {large_arc} 0 {inner_start[0]:.3f} {inner_start[1]:.3f} Z"
+    )
+
+
+def generate_portfolio_overview_svg(stats: dict, now: datetime) -> str:
+    width = 900
+    height = 300
+    top_repo_name = shorten_text(str(stats["top_repo_name"]), 24)
+    top_repo_stars = compact_number(int(stats["top_repo_stars"]))
+    latest_push_text = str(stats["latest_push_text"])
+    updated_text = now.strftime("%Y-%m-%d %H:%M")
+
+    metrics = [
+        ("Public Repos", compact_number(int(stats["public_repos"]))),
+        ("Total Stars", compact_number(int(stats["total_stars"]))),
+        ("Total Forks", compact_number(int(stats["total_forks"]))),
+        ("Active Repos (30d)", compact_number(int(stats["active_30d"]))),
+    ]
+    card_x = [40, 250, 460, 670]
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<defs><linearGradient id="portfolioBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b1228"/><stop offset="100%" stop-color="#111f45"/></linearGradient></defs>',
+        '<rect x="0" y="0" width="900" height="300" rx="18" fill="url(#portfolioBg)"/>',
+        '<text x="42" y="54" fill="#8ec5ff" font-size="25" font-family="Segoe UI,Arial,sans-serif" font-weight="700">Portfolio Highlights</text>',
+        f'<text x="42" y="82" fill="#93a0be" font-size="14" font-family="Segoe UI,Arial,sans-serif">Updated {esc(updated_text)} ({esc(TIMEZONE)})</text>',
+    ]
+
+    for index, (label, value) in enumerate(metrics):
+        x = card_x[index]
+        parts.extend(
+            [
+                f'<rect x="{x}" y="104" width="190" height="122" rx="14" fill="#0e1a38" stroke="#264179"/>',
+                f'<text x="{x + 18}" y="150" fill="#77ddff" font-size="36" font-family="Segoe UI,Arial,sans-serif" font-weight="800">{esc(value)}</text>',
+                f'<text x="{x + 18}" y="190" fill="#a6b2cf" font-size="16" font-family="Segoe UI,Arial,sans-serif">{esc(label)}</text>',
+            ]
+        )
+
+    parts.extend(
+        [
+            '<rect x="40" y="242" width="820" height="34" rx="10" fill="#0e1a38" stroke="#264179"/>',
+            f'<text x="58" y="266" fill="#8ec5ff" font-size="15" font-family="Segoe UI,Arial,sans-serif">Top Repo: {esc(top_repo_name)} ★{esc(top_repo_stars)} · Last Push: {esc(latest_push_text)}</text>',
+        ]
+    )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def generate_language_mix_svg(stats: dict) -> str:
+    width = 900
+    height = 320
+    raw_weights = dict(stats.get("language_weights") or {})
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<defs><linearGradient id="langBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#080f20"/><stop offset="100%" stop-color="#111c3a"/></linearGradient></defs>',
+        '<rect x="0" y="0" width="900" height="320" rx="18" fill="url(#langBg)"/>',
+        '<text x="42" y="56" fill="#8ec5ff" font-size="25" font-family="Segoe UI,Arial,sans-serif" font-weight="700">Top Languages</text>',
+        '<text x="42" y="84" fill="#93a0be" font-size="14" font-family="Segoe UI,Arial,sans-serif">By public repository size</text>',
+    ]
+
+    if not raw_weights:
+        parts.extend(
+            [
+                '<circle cx="250" cy="178" r="96" fill="none" stroke="#28426d" stroke-width="24"/>',
+                '<text x="250" y="172" fill="#8ec5ff" font-size="26" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">No Language Data</text>',
+                '<text x="250" y="204" fill="#93a0be" font-size="16" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">Push code to see language mix</text>',
+            ]
+        )
+        parts.append("</svg>")
+        return "".join(parts)
+
+    ordered = sorted(raw_weights.items(), key=lambda item: item[1], reverse=True)
+    if len(ordered) > 6:
+        merged_other = sum(weight for _, weight in ordered[5:])
+        ordered = ordered[:5] + [("Other", merged_other)]
+
+    total_weight = max(sum(weight for _, weight in ordered), 1)
+    palette = ["#6ea6ff", "#b593ff", "#3bcacb", "#ff9f68", "#a7ff5c", "#f6d365", "#ff7aa2"]
+
+    cx = 250
+    cy = 180
+    inner_radius = 68
+    outer_radius = 106
+    start_angle = -90.0
+
+    parts.append(f'<circle cx="{cx}" cy="{cy}" r="{(inner_radius + outer_radius) / 2:.1f}" fill="none" stroke="#1f355d" stroke-width="{outer_radius - inner_radius:.1f}"/>')
+
+    legend_y = 108
+    for index, (language, weight) in enumerate(ordered):
+        percent = (weight / total_weight) * 100
+        sweep = max((weight / total_weight) * 360, 3)
+        end_angle = start_angle + sweep
+        color = palette[index % len(palette)]
+        path_data = donut_segment_path(cx, cy, inner_radius, outer_radius, start_angle, end_angle)
+        parts.append(f'<path d="{path_data}" fill="{color}"/>')
+
+        y = legend_y + index * 34
+        parts.extend(
+            [
+                f'<rect x="470" y="{y - 14}" width="16" height="16" rx="4" fill="{color}"/>',
+                f'<text x="496" y="{y}" fill="#d6e4ff" font-size="20" font-family="Segoe UI,Arial,sans-serif">{esc(language)}</text>',
+                f'<text x="852" y="{y}" fill="#7ce6ff" font-size="20" font-family="Segoe UI,Arial,sans-serif" text-anchor="end">{percent:.1f}%</text>',
+            ]
+        )
+        start_angle = end_angle
+
+    parts.extend(
+        [
+            '<text x="250" y="170" fill="#d6e4ff" font-size="22" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">Language Mix</text>',
+            f'<text x="250" y="198" fill="#93a0be" font-size="16" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{len(raw_weights)} languages</text>',
+        ]
+    )
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def generate_year_progress_svg(now: datetime) -> str:
     year = now.year
     days_total = 366 if is_leap_year(year) else 365
@@ -296,22 +533,33 @@ def main() -> None:
     tz = ZoneInfo(TIMEZONE)
     now = datetime.now(tz)
     user = fetch_user(USERNAME)
+    repos = fetch_repositories(USERNAME)
+    portfolio_stats = summarize_portfolio(repos, user, now)
     contribution_days, year_total = fetch_contribution_days(USERNAME, date(now.year, 1, 1), now.date())
     contribution_stats = compute_contribution_stats(contribution_days, now.date(), year_total)
     os.makedirs(DIST_DIR, exist_ok=True)
 
     hero_svg = generate_hero_svg(contribution_stats)
+    portfolio_svg = generate_portfolio_overview_svg(portfolio_stats, now)
+    languages_svg = generate_language_mix_svg(portfolio_stats)
     snapshot_svg = generate_snapshot_svg(user, now)
     year_svg = generate_year_progress_svg(now)
 
     with open(os.path.join(DIST_DIR, "hero-banner.svg"), "w", encoding="utf-8") as file:
         file.write(hero_svg)
+    with open(os.path.join(DIST_DIR, "portfolio-overview.svg"), "w", encoding="utf-8") as file:
+        file.write(portfolio_svg)
+    with open(os.path.join(DIST_DIR, "languages-mix.svg"), "w", encoding="utf-8") as file:
+        file.write(languages_svg)
     with open(os.path.join(DIST_DIR, "profile-stable-card.svg"), "w", encoding="utf-8") as file:
         file.write(snapshot_svg)
     with open(os.path.join(DIST_DIR, "year-progress.svg"), "w", encoding="utf-8") as file:
         file.write(year_svg)
 
-    print("Generated dist/hero-banner.svg, dist/profile-stable-card.svg and dist/year-progress.svg")
+    print(
+        "Generated dist/hero-banner.svg, dist/portfolio-overview.svg, dist/languages-mix.svg, "
+        "dist/profile-stable-card.svg and dist/year-progress.svg"
+    )
 
 
 if __name__ == "__main__":
