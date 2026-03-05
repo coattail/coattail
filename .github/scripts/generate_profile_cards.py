@@ -320,7 +320,7 @@ def generate_snapshot_svg(user: dict, now: datetime) -> str:
     return "".join(parts)
 
 
-def generate_hero_svg(stats: dict[str, int | str | date | None]) -> str:
+def generate_hero_svg(stats: dict[str, int | str | date | None], recent_counts: list[int], now: datetime) -> str:
     width = 900
     height = 320
     current_streak = int(stats["current_streak"])
@@ -329,24 +329,79 @@ def generate_hero_svg(stats: dict[str, int | str | date | None]) -> str:
     current_range = str(stats["current_range"])
     longest_range = str(stats["longest_range"])
 
+    active_days = sum(1 for count in recent_counts if count > 0)
+    peak_count = max(recent_counts) if recent_counts else 0
+    avg_count = (sum(recent_counts) / len(recent_counts)) if recent_counts else 0.0
+    max_count = max(peak_count, 1)
+
+    bar_start_x = 356
+    bar_bottom_y = 270
+    bar_gap = 16
+    bar_width = 10
+    bar_max_height = 78
+
+    bar_parts: list[str] = []
+    point_list: list[str] = []
+    for index, count in enumerate(recent_counts):
+        x = bar_start_x + index * bar_gap
+        if count <= 0:
+            h = 4.0
+            color = "#253b66"
+        else:
+            ratio = count / max_count
+            h = max(6.0, ratio * bar_max_height)
+            if ratio < 0.35:
+                color = "#4f7dff"
+            elif ratio < 0.7:
+                color = "#59c9ff"
+            else:
+                color = "#6ff3d6"
+        y = bar_bottom_y - h
+        bar_parts.append(
+            f'<rect x="{x}" y="{y:.2f}" width="{bar_width}" height="{h:.2f}" rx="3" fill="{color}" opacity="0.95"/>'
+        )
+        point_list.append(f"{x + bar_width / 2:.2f},{y - 2:.2f}")
+
+    sparkline = ""
+    if point_list:
+        sparkline = (
+            f'<polyline points="{" ".join(point_list)}" fill="none" stroke="#b79dff" '
+            'stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>'
+        )
+
+    updated_text = now.strftime("%Y-%m-%d")
+    year_total_text = compact_number(year_total)
+
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
-        '<defs><linearGradient id="hero-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#171c33"/><stop offset="100%" stop-color="#12162b"/></linearGradient><radialGradient id="ring-glow" cx="0.5" cy="0.38" r="0.45"><stop offset="0%" stop-color="#6ea6ff" stop-opacity="0.12"/><stop offset="100%" stop-color="#6ea6ff" stop-opacity="0"/></radialGradient></defs>',
-        '<rect x="0" y="0" width="900" height="320" rx="18" fill="url(#hero-bg)"/>',
-        '<rect x="300" y="38" width="2.2" height="244" rx="1" fill="#d8dbe5" fill-opacity="0.75"/>',
-        '<rect x="600" y="38" width="2.2" height="244" rx="1" fill="#d8dbe5" fill-opacity="0.75"/>',
-        '<circle cx="450" cy="118" r="78" fill="url(#ring-glow)"/>',
-        '<path fill="#6ea6ff" fill-rule="evenodd" d="M450 20C438 30 431 42 431 56C431 75 446 90 464 90C483 90 499 76 499 56C499 44 494 33 483 25C484 35 479 45 470 50C467 40 460 31 450 20ZM471 51C473 58 470 66 463 69C456 65 454 57 458 51C461 47 462 43 462 38C467 41 469 46 471 51Z"/>',
-        f'<text x="150" y="120" fill="#6ea6ff" font-size="70" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">{year_total}</text>',
-        '<text x="150" y="182" fill="#6ea6ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="500" text-anchor="middle">Total Contributions</text>',
-        f'<text x="150" y="238" fill="#3bcacb" font-size="28" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range if current_streak > 0 else "This year")}</text>',
-        '<circle cx="450" cy="112" r="73" fill="none" stroke="#6ea6ff" stroke-width="11"/>',
-        f'<text x="450" y="135" fill="#b593ff" font-size="74" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">{current_streak}</text>',
-        '<text x="450" y="222" fill="#b593ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="600" text-anchor="middle">Current Streak</text>',
-        f'<text x="450" y="270" fill="#3bcacb" font-size="28" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(current_range)}</text>',
-        f'<text x="750" y="120" fill="#6ea6ff" font-size="70" font-family="Segoe UI,Arial,sans-serif" font-weight="700" text-anchor="middle">{longest_streak}</text>',
-        '<text x="750" y="182" fill="#6ea6ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="500" text-anchor="middle">Longest Streak</text>',
-        f'<text x="750" y="238" fill="#3bcacb" font-size="28" font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">{esc(longest_range)}</text>',
+        '<defs><linearGradient id="heroBgNew" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b1125"/><stop offset="100%" stop-color="#151d3a"/></linearGradient><linearGradient id="panelBgNew" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f1a3c"/><stop offset="100%" stop-color="#101c3a"/></linearGradient><radialGradient id="decorGlowNew" cx="0.82" cy="0.18" r="0.42"><stop offset="0%" stop-color="#6ea6ff" stop-opacity="0.20"/><stop offset="100%" stop-color="#6ea6ff" stop-opacity="0"/></radialGradient></defs>',
+        '<rect x="0" y="0" width="900" height="320" rx="18" fill="url(#heroBgNew)"/>',
+        '<circle cx="760" cy="72" r="110" fill="url(#decorGlowNew)"/>',
+        '<text x="40" y="52" fill="#9dc4ff" font-size="30" font-family="Segoe UI,Arial,sans-serif" font-weight="700">Contribution Pulse</text>',
+        '<text x="40" y="78" fill="#8d9bbd" font-size="14" font-family="Segoe UI,Arial,sans-serif">Fresh look · Last 30 days activity trend</text>',
+        f'<text x="860" y="52" fill="#8d9bbd" font-size="13" font-family="Segoe UI,Arial,sans-serif" text-anchor="end">Updated {esc(updated_text)}</text>',
+        '<rect x="34" y="96" width="276" height="194" rx="16" fill="url(#panelBgNew)" stroke="#2b467e"/>',
+        f'<text x="58" y="158" fill="#b593ff" font-size="78" font-family="Segoe UI,Arial,sans-serif" font-weight="700">{current_streak}</text>',
+        '<text x="58" y="188" fill="#7eaefc" font-size="22" font-family="Segoe UI,Arial,sans-serif" font-weight="600">Current Streak</text>',
+        f'<text x="58" y="216" fill="#45d6d3" font-size="18" font-family="Segoe UI,Arial,sans-serif">{esc(current_range)}</text>',
+        '<rect x="54" y="236" width="116" height="42" rx="10" fill="#13244a" stroke="#28467e"/>',
+        f'<text x="66" y="252" fill="#9ab6e8" font-size="12" font-family="Segoe UI,Arial,sans-serif">THIS YEAR</text><text x="66" y="271" fill="#72d6ff" font-size="22" font-family="Segoe UI,Arial,sans-serif" font-weight="700">{esc(year_total_text)}</text>',
+        '<rect x="178" y="236" width="116" height="42" rx="10" fill="#13244a" stroke="#28467e"/>',
+        f'<text x="190" y="252" fill="#9ab6e8" font-size="12" font-family="Segoe UI,Arial,sans-serif">LONGEST</text><text x="190" y="271" fill="#72d6ff" font-size="22" font-family="Segoe UI,Arial,sans-serif" font-weight="700">{longest_streak}</text>',
+        '<rect x="326" y="96" width="540" height="194" rx="16" fill="url(#panelBgNew)" stroke="#2b467e"/>',
+        '<text x="348" y="120" fill="#9dc4ff" font-size="20" font-family="Segoe UI,Arial,sans-serif" font-weight="600">30-Day Activity</text>',
+        f'<text x="848" y="120" fill="#45d6d3" font-size="16" font-family="Segoe UI,Arial,sans-serif" text-anchor="end">{esc(longest_range)}</text>',
+        '<rect x="348" y="128" width="154" height="54" rx="10" fill="#122248" stroke="#2a487f"/>',
+        f'<text x="360" y="147" fill="#9ab6e8" font-size="12" font-family="Segoe UI,Arial,sans-serif">ACTIVE DAYS</text><text x="360" y="171" fill="#72d6ff" font-size="24" font-family="Segoe UI,Arial,sans-serif" font-weight="700">{active_days}/30</text>',
+        '<rect x="516" y="128" width="154" height="54" rx="10" fill="#122248" stroke="#2a487f"/>',
+        f'<text x="528" y="147" fill="#9ab6e8" font-size="12" font-family="Segoe UI,Arial,sans-serif">AVG / DAY</text><text x="528" y="171" fill="#72d6ff" font-size="24" font-family="Segoe UI,Arial,sans-serif" font-weight="700">{avg_count:.1f}</text>',
+        '<rect x="684" y="128" width="164" height="54" rx="10" fill="#122248" stroke="#2a487f"/>',
+        f'<text x="696" y="147" fill="#9ab6e8" font-size="12" font-family="Segoe UI,Arial,sans-serif">PEAK DAY</text><text x="696" y="171" fill="#72d6ff" font-size="24" font-family="Segoe UI,Arial,sans-serif" font-weight="700">{peak_count}</text>',
+        '<line x1="350" y1="270" x2="846" y2="270" stroke="#2a467a" stroke-width="1.4"/>',
+        *bar_parts,
+        sparkline,
+        '<text x="350" y="288" fill="#8d9bbd" font-size="12" font-family="Segoe UI,Arial,sans-serif">30d ago</text>',
+        '<text x="846" y="288" fill="#8d9bbd" font-size="12" font-family="Segoe UI,Arial,sans-serif" text-anchor="end">today</text>',
         "</svg>",
     ]
     return "".join(parts)
@@ -532,14 +587,19 @@ def generate_year_progress_svg(now: datetime) -> str:
 def main() -> None:
     tz = ZoneInfo(TIMEZONE)
     now = datetime.now(tz)
+    today = now.date()
     user = fetch_user(USERNAME)
     repos = fetch_repositories(USERNAME)
     portfolio_stats = summarize_portfolio(repos, user, now)
-    contribution_days, year_total = fetch_contribution_days(USERNAME, date(now.year, 1, 1), now.date())
-    contribution_stats = compute_contribution_stats(contribution_days, now.date(), year_total)
+    contribution_days, year_total = fetch_contribution_days(USERNAME, date(now.year, 1, 1), today)
+    contribution_stats = compute_contribution_stats(contribution_days, today, year_total)
+    count_by_day = {day: count for day, count in contribution_days}
+    recent_counts = [
+        count_by_day.get(today - timedelta(days=29 - index), 0) for index in range(30)
+    ]
     os.makedirs(DIST_DIR, exist_ok=True)
 
-    hero_svg = generate_hero_svg(contribution_stats)
+    hero_svg = generate_hero_svg(contribution_stats, recent_counts, now)
     portfolio_svg = generate_portfolio_overview_svg(portfolio_stats, now)
     languages_svg = generate_language_mix_svg(portfolio_stats)
     snapshot_svg = generate_snapshot_svg(user, now)
