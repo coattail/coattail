@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import math
 import os
@@ -36,7 +37,9 @@ def fetch_user(login: str) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
-def fetch_contribution_days(login: str, start: date, end: date) -> list[tuple[date, int]]:
+def fetch_contribution_days(
+    login: str, start: date, end: date
+) -> tuple[list[tuple[date, int]], int | None]:
     req = urllib.request.Request(
         f"https://github.com/users/{login}/contributions?from={start.isoformat()}&to={end.isoformat()}",
         headers={
@@ -47,19 +50,56 @@ def fetch_contribution_days(login: str, start: date, end: date) -> list[tuple[da
     with urllib.request.urlopen(req, timeout=20) as response:
         body = response.read().decode("utf-8", errors="ignore")
 
-    day_pairs = re.findall(r'data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-count="(\d+)"', body)
-    if not day_pairs:
-        reverse_pairs = re.findall(r'data-count="(\d+)"[^>]*data-date="(\d{4}-\d{2}-\d{2})"', body)
-        day_pairs = [(date_text, count_text) for count_text, date_text in reverse_pairs]
+    day_cells = re.findall(
+        r'data-date="(\d{4}-\d{2}-\d{2})"[^>]*id="([^"]+)"[^>]*data-level="(\d+)"[^>]*class="ContributionCalendar-day"',
+        body,
+    )
+    if not day_cells:
+        day_cells = [
+            (date_text, cell_id, level_text)
+            for cell_id, date_text, level_text in re.findall(
+                r'id="([^"]+)"[^>]*data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d+)"[^>]*class="ContributionCalendar-day"',
+                body,
+            )
+        ]
 
-    results: list[tuple[date, int]] = []
-    for date_text, count_text in day_pairs:
+    tooltip_count_by_id: dict[str, int] = {}
+    tooltip_pairs = re.findall(r'<tool-tip[^>]*for="([^"]+)"[^>]*>(.*?)</tool-tip>', body, flags=re.DOTALL)
+    for cell_id, tooltip_text in tooltip_pairs:
+        plain_text = html.unescape(re.sub(r"<[^>]+>", " ", tooltip_text))
+        plain_text = " ".join(plain_text.split())
+        count_match = re.search(r"(\d+)\s+contributions?", plain_text)
+        if count_match:
+            tooltip_count_by_id[cell_id] = int(count_match.group(1))
+            continue
+        if "No contributions on" in plain_text:
+            tooltip_count_by_id[cell_id] = 0
+
+    day_count_map: dict[date, int] = {}
+    for date_text, cell_id, level_text in day_cells:
         try:
-            results.append((datetime.strptime(date_text, "%Y-%m-%d").date(), int(count_text)))
+            target_date = datetime.strptime(date_text, "%Y-%m-%d").date()
         except ValueError:
             continue
-    results.sort(key=lambda item: item[0])
-    return results
+        count = tooltip_count_by_id.get(cell_id)
+        if count is None:
+            count = 1 if int(level_text) > 0 else 0
+        previous = day_count_map.get(target_date, 0)
+        day_count_map[target_date] = max(previous, count)
+
+    year_total: int | None = None
+    summary_block_match = re.search(
+        r'id="js-contribution-activity-description"[^>]*>(.*?)</h2>', body, flags=re.DOTALL
+    )
+    if summary_block_match:
+        summary_text = html.unescape(re.sub(r"<[^>]+>", " ", summary_block_match.group(1)))
+        summary_text = " ".join(summary_text.split())
+        total_match = re.search(r"([0-9][0-9,]*)\s+contributions?", summary_text)
+        if total_match:
+            year_total = int(total_match.group(1).replace(",", ""))
+
+    results = sorted(day_count_map.items(), key=lambda item: item[0])
+    return results, year_total
 
 
 def format_short_date(target: date) -> str:
@@ -67,11 +107,14 @@ def format_short_date(target: date) -> str:
 
 
 def compute_contribution_stats(
-    day_counts: list[tuple[date, int]], today: date
+    day_counts: list[tuple[date, int]], today: date, year_total_override: int | None = None
 ) -> dict[str, int | str | date | None]:
     count_map = {day: count for day, count in day_counts if day <= today}
     start_of_year = date(today.year, 1, 1)
-    year_total = sum(count for day, count in count_map.items() if start_of_year <= day <= today)
+    if year_total_override is None:
+        year_total = sum(count for day, count in count_map.items() if start_of_year <= day <= today)
+    else:
+        year_total = year_total_override
 
     if count_map:
         start_day = min(count_map)
@@ -251,8 +294,8 @@ def main() -> None:
     tz = ZoneInfo(TIMEZONE)
     now = datetime.now(tz)
     user = fetch_user(USERNAME)
-    contribution_days = fetch_contribution_days(USERNAME, date(now.year - 1, 1, 1), now.date())
-    contribution_stats = compute_contribution_stats(contribution_days, now.date())
+    contribution_days, year_total = fetch_contribution_days(USERNAME, date(now.year, 1, 1), now.date())
+    contribution_stats = compute_contribution_stats(contribution_days, now.date(), year_total)
     os.makedirs(DIST_DIR, exist_ok=True)
 
     hero_svg = generate_hero_svg(contribution_stats)

@@ -3,7 +3,7 @@
 Data dashboards · Macro research · Multi-asset tools
 
 <p align="center">
-  <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/hero-banner.svg" alt="streak overview card" />
+  <img width="68%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/hero-banner.svg" alt="streak overview card" />
 </p>
 
 <p align="center">
@@ -11,7 +11,7 @@ Data dashboards · Macro research · Multi-asset tools
 </p>
 
 <p align="center">
-  <img width="98%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/profile-stable-card.svg" alt="profile stable card" />
+  <img width="68%" src="https://raw.githubusercontent.com/Sunny-1991/Sunny-1991/output/profile-stable-card.svg" alt="profile stable card" />
 </p>
 
 <p align="center">
