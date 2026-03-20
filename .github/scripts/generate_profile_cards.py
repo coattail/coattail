@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 
-USERNAME = os.environ.get("GITHUB_USERNAME", "Sunny-1991")
+USERNAME = os.environ.get("GITHUB_USERNAME", "coattail")
 TIMEZONE = os.environ.get("CARD_TIMEZONE", "Asia/Shanghai")
 DIST_DIR = os.environ.get("DIST_DIR", "dist")
 

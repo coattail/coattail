@@ -24,14 +24,14 @@ jobs:
       - name: Generate stable profile cards
         run: python3 .github/scripts/generate_profile_cards.py
         env:
-          GITHUB_USERNAME: Sunny-1991
+          GITHUB_USERNAME: coattail
           CARD_TIMEZONE: Asia/Shanghai
           DIST_DIR: dist
 
       - name: Generate snake svg files
         uses: Platane/snk@v3
         with:
-          github_user_name: Sunny-1991
+          github_user_name: coattail
           outputs: |
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
