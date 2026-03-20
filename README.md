@@ -7,11 +7,11 @@ Data dashboards · Macro research · Multi-asset tools
 </p>
 
 <p align="center">
-  <img width="68%" src="https://raw.githubusercontent.com/coattail/coattail/main/dist/year-progress-20260321.svg" alt="Year progress countdown" />
+  <img width="68%" src="https://raw.githubusercontent.com/coattail/coattail/main/dist/languages-mix-20260321.svg" alt="Top languages card" />
 </p>
 
 <p align="center">
-  <img width="68%" src="https://raw.githubusercontent.com/coattail/coattail/main/dist/languages-mix-20260321.svg" alt="Top languages card" />
+  <img width="68%" src="https://raw.githubusercontent.com/coattail/coattail/main/dist/year-progress-20260321.svg" alt="Year progress countdown" />
 </p>
 
 ## Featured Projects
@@ -20,4 +20,4 @@ Data dashboards · Macro research · Multi-asset tools
 - [Multi-Asset-Dashboard](https://github.com/coattail/Multi-Asset-Dashboard)
 - [US-Valuation-Monitor](https://github.com/coattail/US-Valuation-Monitor)
 
-<!-- profile-homepage-classic: 2026-03-21 rev3 -->
+<!-- profile-homepage-classic: 2026-03-21 rev4 -->
