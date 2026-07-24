@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Sunny research profile hero</title>
+  <desc id="desc">Animated hero banner with macro research, housing, multi-asset, and SEC tracker themes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#08111f"/>
+      <stop offset="55%" stop-color="#0f1f33"/>
+      <stop offset="100%" stop-color="#18283d"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d182a"/>
+      <stop offset="100%" stop-color="#112238"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#66e2d5"/>
+      <stop offset="50%" stop-color="#8bb8ff"/>
+      <stop offset="100%" stop-color="#d2a8ff"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.8" cy="0.15" r="0.5">
+      <stop offset="0%" stop-color="#6ea6ff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#6ea6ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.18" cy="0.75" r="0.55">
+      <stop offset="0%" stop-color="#54d8c8" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#54d8c8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#29405d" stroke-width="1" opacity="0.45"/>
+    </pattern>
+    <style>
+      .label { font-family: Georgia, 'Times New Roman', serif; }
+      .ui { font-family: 'Avenir Next', 'Segoe UI', Arial, sans-serif; }
+      .muted { fill: #91a5be; }
+      .bright { fill: #e8f0ff; }
+      .lineA, .lineB, .lineC { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .lineA { stroke: #66e2d5; stroke-width: 3; stroke-dasharray: 520; stroke-dashoffset: 520; animation: draw 7s ease-in-out infinite; }
+      .lineB { stroke: #8bb8ff; stroke-width: 3; stroke-dasharray: 520; stroke-dashoffset: 520; animation: draw 7s ease-in-out infinite 0.8s; }
+      .lineC { stroke: #d2a8ff; stroke-width: 3; stroke-dasharray: 520; stroke-dashoffset: 520; animation: draw 7s ease-in-out infinite 1.6s; }
+      .sweep { animation: sweep 8s linear infinite; }
+      .grid-drift { animation: drift 18s linear infinite; }
+      .ticker { animation: blink 2.8s ease-in-out infinite; }
+      .bar { transform-box: fill-box; transform-origin: center bottom; animation: rise 5.6s ease-in-out infinite; }
+      .bar.b2 { animation-delay: 0.5s; }
+      .bar.b3 { animation-delay: 1s; }
+      .bar.b4 { animation-delay: 1.5s; }
+      @keyframes draw {
+        0% { stroke-dashoffset: 520; opacity: 0.15; }
+        18% { opacity: 0.95; }
+        45% { stroke-dashoffset: 0; opacity: 0.95; }
+        70% { stroke-dashoffset: 0; opacity: 0.55; }
+        100% { stroke-dashoffset: -520; opacity: 0.08; }
+      }
+      @keyframes sweep {
+        0% { transform: translateX(-320px); opacity: 0; }
+        20% { opacity: 0.35; }
+        55% { opacity: 0.1; }
+        100% { transform: translateX(1320px); opacity: 0; }
+      }
+      @keyframes drift {
+        0% { transform: translateX(0px); }
+        100% { transform: translateX(-40px); }
+      }
+      @keyframes blink {
+        0%, 100% { opacity: 0.35; }
+        50% { opacity: 1; }
+      }
+      @keyframes rise {
+        0%, 100% { transform: scaleY(0.92); opacity: 0.75; }
+        50% { transform: scaleY(1); opacity: 1; }
+      }
+    </style>
+  </defs>
+
+  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="28" fill="url(#grid)" opacity="0.35" class="grid-drift"/>
+  <circle cx="980" cy="74" r="160" fill="url(#glowA)"/>
+  <circle cx="180" cy="286" r="180" fill="url(#glowB)"/>
+
+  <g opacity="0.8">
+    <rect x="54" y="42" width="122" height="28" rx="14" fill="#10233b" stroke="#284563"/>
+    <text x="78" y="61" class="ui" fill="#7fd4ff" font-size="13" font-weight="700">GITHUB PROFILE</text>
+  </g>
+
+  <text x="56" y="122" class="label bright" font-size="52" font-weight="700">Sunny</text>
+  <text x="56" y="164" class="ui muted" font-size="22">Macro research, asset dashboards, and market tools</text>
+  <text x="56" y="196" class="ui muted" font-size="22">built to make dense signals calmer and easier to read</text>
+
+  <g>
+    <rect x="56" y="228" width="170" height="42" rx="12" fill="#0d1e31" stroke="#2b4660"/>
+    <text x="76" y="254" class="ui" fill="#8dd8ff" font-size="14" font-weight="700">CURRENT THEMES</text>
+    <text x="244" y="254" class="ui" fill="#e6efff" font-size="16">housing • macro • valuation • 13F</text>
+  </g>
+
+  <g>
+    <rect x="712" y="40" width="432" height="280" rx="22" fill="url(#panel)" stroke="#284563"/>
+    <text x="744" y="78" class="ui" fill="#9ab3ca" font-size="13" letter-spacing="1.5">RESEARCH SURFACE</text>
+    <text x="744" y="112" class="ui bright" font-size="28" font-weight="700">Signal Stack</text>
+
+    <rect x="742" y="132" width="92" height="112" rx="16" fill="#0c1a2d" stroke="#243f60"/>
+    <text x="760" y="160" class="ui" fill="#88a8c7" font-size="12">MACRO</text>
+    <rect x="764" y="205" width="10" height="20" rx="4" fill="#66e2d5" class="bar"/>
+    <rect x="782" y="193" width="10" height="32" rx="4" fill="#8bb8ff" class="bar b2"/>
+    <rect x="800" y="170" width="10" height="55" rx="4" fill="#d2a8ff" class="bar b3"/>
+
+    <rect x="846" y="132" width="92" height="112" rx="16" fill="#0c1a2d" stroke="#243f60"/>
+    <text x="862" y="160" class="ui" fill="#88a8c7" font-size="12">HOUSING</text>
+    <path d="M 862 218 C 878 208, 890 198, 906 182 C 914 174, 924 168, 930 162" class="lineA"/>
+
+    <rect x="950" y="132" width="92" height="112" rx="16" fill="#0c1a2d" stroke="#243f60"/>
+    <text x="968" y="160" class="ui" fill="#88a8c7" font-size="12">ASSETS</text>
+    <path d="M 966 214 C 978 210, 990 196, 1002 186 C 1010 180, 1022 188, 1030 172" class="lineB"/>
+
+    <rect x="1054" y="132" width="60" height="112" rx="16" fill="#0c1a2d" stroke="#243f60"/>
+    <text x="1066" y="160" class="ui" fill="#88a8c7" font-size="12">13F</text>
+    <circle cx="1084" cy="195" r="6" fill="#66e2d5" class="ticker"/>
+    <circle cx="1084" cy="213" r="6" fill="#8bb8ff" class="ticker" style="animation-delay:0.8s"/>
+
+    <text x="744" y="276" class="ui" fill="#dbe7f9" font-size="16">Readable tools for recurring research workflows</text>
+  </g>
+
+  <g opacity="0.8">
+    <path d="M 520 88 C 610 88, 650 88, 740 88" stroke="url(#signal)" stroke-width="2" filter="url(#softGlow)" class="sweep"/>
+    <path d="M 468 276 C 610 252, 674 222, 798 184 C 868 162, 934 172, 1050 138" class="lineC" filter="url(#softGlow)"/>
+  </g>
+
+  <g>
+    <text x="56" y="322" class="ui" fill="#7e93ad" font-size="14">Selected repos: Macro-Dashboard · Multi-Asset-Dashboard · Centaline-Leading-Index · guru-13f-monitor</text>
+  </g>
+</svg>
