@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="580" height="280" viewBox="0 0 580 280" role="img" aria-labelledby="title desc">
+  <title id="title">Macro dashboard card</title>
+  <desc id="desc">Animated project card for macro dashboard and valuation monitor work.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1322"/>
+      <stop offset="100%" stop-color="#12233a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#69dfd1"/>
+      <stop offset="100%" stop-color="#8ab6ff"/>
+    </linearGradient>
+    <style>
+      .ui { font-family: 'Avenir Next', 'Segoe UI', Arial, sans-serif; }
+      .path-main { fill: none; stroke: url(#accent); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 340; stroke-dashoffset: 340; animation: draw 6s ease-in-out infinite; }
+      .path-alt { fill: none; stroke: #d2a8ff; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 340; stroke-dashoffset: 340; animation: draw 6s ease-in-out infinite 0.9s; opacity: 0.8; }
+      .pulse { animation: pulse 3s ease-in-out infinite; }
+      .scan { animation: scan 5s linear infinite; }
+      @keyframes draw {
+        0% { stroke-dashoffset: 340; opacity: 0.15; }
+        35% { stroke-dashoffset: 0; opacity: 1; }
+        70% { stroke-dashoffset: 0; opacity: 0.65; }
+        100% { stroke-dashoffset: -340; opacity: 0.08; }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.45; }
+        50% { opacity: 1; }
+      }
+      @keyframes scan {
+        0% { transform: translateX(-180px); opacity: 0; }
+        15% { opacity: 0.22; }
+        100% { transform: translateX(620px); opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <rect width="580" height="280" rx="24" fill="url(#bg)"/>
+  <rect x="24" y="24" width="532" height="232" rx="18" fill="#0d1a2d" stroke="#27415d"/>
+  <text x="46" y="58" class="ui" fill="#8ca8c4" font-size="12" letter-spacing="1.4">FEATURED PROJECT</text>
+  <text x="46" y="92" class="ui" fill="#edf4ff" font-size="28" font-weight="700">Macro-Dashboard</text>
+  <text x="46" y="120" class="ui" fill="#9eb0c6" font-size="16">Long-range country comparison across growth, trade, fiscal, and demographics.</text>
+
+  <rect x="46" y="150" width="152" height="34" rx="10" fill="#11253d" stroke="#2b4764"/>
+  <text x="62" y="172" class="ui" fill="#8edbff" font-size="14" font-weight="700">11 economies</text>
+  <rect x="210" y="150" width="160" height="34" rx="10" fill="#11253d" stroke="#2b4764"/>
+  <text x="226" y="172" class="ui" fill="#8edbff" font-size="14" font-weight="700">export-ready charts</text>
+
+  <line x1="60" y1="228" x2="520" y2="228" stroke="#28415a" stroke-width="1.2"/>
+  <line x1="60" y1="198" x2="520" y2="198" stroke="#1d3147" stroke-width="1"/>
+  <line x1="60" y1="168" x2="520" y2="168" stroke="#1d3147" stroke-width="1"/>
+
+  <path d="M 68 210 C 116 206, 148 190, 188 176 C 228 162, 264 170, 304 152 C 350 132, 390 144, 430 122 C 458 108, 484 112, 514 92" class="path-main"/>
+  <path d="M 68 214 C 112 220, 152 210, 192 198 C 232 186, 266 188, 304 180 C 346 172, 390 156, 430 150 C 466 146, 492 138, 514 126" class="path-alt"/>
+
+  <circle cx="304" cy="152" r="5" fill="#69dfd1" class="pulse"/>
+  <circle cx="430" cy="122" r="5" fill="#8ab6ff" class="pulse" style="animation-delay:0.7s"/>
+  <circle cx="514" cy="92" r="5" fill="#d2a8ff" class="pulse" style="animation-delay:1.4s"/>
+
+  <rect x="0" y="0" width="120" height="280" fill="#b0edff" opacity="0.08" class="scan"/>
+</svg>
